@@ -1,18 +1,16 @@
 from datetime import datetime as dt
-from clearconf import BaseConfig as bc
-from clearconf import Prompt
 from multiprocessing import Process
 
-class ProjectConfig(bc):
+class ProjectConfig:
     project_dir = ''
-    experiment_root: Prompt | bool = ''
+    experiment_root = ''
 
     class Test:
         test = 'test'
         class A(Process):
-            ciao: Prompt = 'ciao'
+            ciao = 'ciao'
 
-class ExperimentConfig(bc):
+class ExperimentConfig:
     experiment_name = f'{dt.now().strftime("%Y%m%d_%H%M%S")}'
     experiment_description = ''
     runner = 'qsub'

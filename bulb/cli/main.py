@@ -10,6 +10,11 @@ import typer
 from typing_extensions import Annotated
 
 from bulb.cli import defaults
+from bulb.utils.logging import logger
+# import debugpy
+# debugpy.listen(5678)
+# print('Waiting for debugger to attach...')
+# debugpy.wait_for_client()
 
 app = typer.Typer()
 # app.add_typer(defaults.app, name="defaults")
@@ -30,18 +35,18 @@ def init(
     try:
         project_root = find_git_root()
     except FileNotFoundError as e:
-        logging.success('Could not determine project root')
+        logging.info('Could not determine project root')
         project_root = Path.cwd()
 
     try:
         api.init(project_root)
-        logging.success(f"Initialized bulb project at {project_root}.")
+        logging.info(f"Initialized bulb project at {project_root}.")
     except FileExistsError as e:
-        print(e)
+        logger.error(e, extra={'format': 'cli'})
 
 
 @app.command()
-def prepare():
+def submit(action:str):
     # find project root 
 
     try: bulb_root = find_bulb_root()
@@ -49,17 +54,17 @@ def prepare():
 
         try:
             git_root = find_git_root()
+            try:
+                api.init(git_root)
+                bulb_root = git_root
+            except FileExistsError as e:
+                print(e)  # this should happen only if .bulb is a file
         except FileNotFoundError as e:
             print('Could not find project root. Please check https://bulb/initialization for more information.')
             return
 
-    try:
-        api.init(git_root)
-        bulb_root = git_root
-    except FileExistsError as e:
-        print(e)
         
-    api.prepare(bulb_root)
+    api.submit(bulb_root, action)
 
 
 

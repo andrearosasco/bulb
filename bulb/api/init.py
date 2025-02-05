@@ -9,14 +9,15 @@ def get_configs_path():
     return configs_path
 
 
-def init(project_root: Path):
+def init(project_root: Path, exists_ok: bool = False):
     # find project root 
     bulb_dir = project_root / ".bulb"
 
-    if bulb_dir.is_dir():
-        raise FileExistsError(f"Project already initialized at {project_root}.")
-    if bulb_dir.exists():
+    if bulb_dir.exists() and not bulb_dir.is_dir():
         raise FileExistsError(f"{bulb_dir} already exists and is not a directory.")
+    
+    if bulb_dir.is_dir() and not exists_ok:
+        raise FileExistsError(f"Project already initialized at {project_root}.")
     
     bulb_dir.mkdir()
     (bulb_dir / 'configs').symlink_to(get_configs_path())

@@ -1,0 +1,25 @@
+add scheduled date to metadata
+add the action id to the metadata
+make metadata a json that groups informations from commit, actions and status
+ability for worker to add additional metadata (e.g. hostname, jobid)
+
+move manager and worker to bulb and make it so we can start them through cli
+give to the manager the ability to submit jobs to PBS
+
+
+
+remove the need of a patch file by committing to the local origin
+(only if there is a way to keep the branch/commit hidden until it is needed maybe with dangling commits)
+
+coordinate jobs on multiple machines
+(this would need the point above to be implemented so that the job, 
+runnnig on a different machine from the one where it was submitted could pull the same code version)
+
+improve the configuration system
+ability to purge non-running work directories
+
+add jobs.log visualization through cli
+add data visualization capabilities through cli (like the notebooks i'm using for dp but maybe made with textual)
+
+add the bulb version to the metadata
+if more actions use the same code there is no need to duplicate it every time
