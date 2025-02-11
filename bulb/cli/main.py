@@ -9,7 +9,7 @@ from bulb import api
 import typer
 from typing_extensions import Annotated
 
-from bulb.cli import defaults
+from bulb.cli import manager
 from bulb.utils.logging import logger
 # import debugpy
 # debugpy.listen(5678)
@@ -17,7 +17,7 @@ from bulb.utils.logging import logger
 # debugpy.wait_for_client()
 
 app = typer.Typer()
-# app.add_typer(defaults.app, name="defaults")
+app.add_typer(manager.app, name="manager")
 
 @app.command()
 def init(
@@ -46,7 +46,7 @@ def init(
 
 
 @app.command()
-def submit(action:str):
+def submit(action:str, name:str=''):
     # find project root 
 
     try: bulb_root = find_bulb_root()
@@ -64,7 +64,9 @@ def submit(action:str):
             return
 
         
-    api.submit(bulb_root, action)
+    api.submit(bulb_root, action, name)
+
+
 
 
 

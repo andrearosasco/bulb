@@ -6,26 +6,37 @@ from pathlib import Path
 import atexit
 import uuid
 import multiprocessing.managers
+import json
 
 from bulb.configs.config import ProjectConfig, ExperimentConfig
     
 
 # Function to set up directories and save git info
-def log_info(log_dir, action):
+def log_info(log_dir, action, name, action_id):
     Path(log_dir).mkdir(parents=True, exist_ok=True)
 
     exp_commit = subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip().decode()
     git_diff = subprocess.check_output(['git', 'diff', 'HEAD']).decode()
-
-    with open(f"{log_dir}/commit.txt", 'w') as f:
-        f.write(exp_commit)
-    with open(f"{log_dir}/file.patch", 'w') as f:
-        f.write(git_diff)
-    with open(f"{log_dir}/action.txt", 'w') as f:
-        f.write(action)
-    with open(f"{log_dir}/status.txt", 'w') as f:
-        f.write("Scheduled")
     
+    # Try to load existing data first
+    info = {}
+    if os.path.exists(f"{log_dir}/info.json"):
+        with open(f"{log_dir}/info.json", 'r') as f:
+            info = json.load(f)
+    
+    # Update with new data
+    info.update({
+        'action_id': action_id,
+        'commit': exp_commit,
+        'patch': git_diff,
+        'action': action,
+        'name': name,
+        'status': 'Scheduled',
+        'submission_time': datetime.datetime.now().strftime("%Y%m%d_%H%M%S"),
+    })
+    
+    with open(f"{log_dir}/meta.json", 'w+') as f:
+        json.dump(info, f, indent=2)
 
 # Function to save the run script
 def clone_project(project_dir, work_dir, patch_file, link_dirs):
@@ -59,12 +70,11 @@ def add_to_queue(action_working_dir, log_dir, action):
     ok = manager.add_action(action)
 
 # Main script execution
-def submit(bulb_root, action):
+def submit(bulb_root, action, name):
     action_id = str(uuid.uuid4())
     action_log_dir = f"/fastwork/arosasco/bulb/logs/{action_id}"
     action_working_dir = f"/fastwork/arosasco/bulb/runs/{action_id}"
 
-    log_info(log_dir=action_log_dir, action=action)
     clone_project(bulb_root, action_working_dir, patch_file=f'{action_log_dir}/file.patch', link_dirs=['data'])
-
     add_to_queue(action_working_dir, action_log_dir, action)
+    log_info(log_dir=action_log_dir, action=action, name=name, action_id=action_id)
