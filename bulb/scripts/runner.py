@@ -4,20 +4,7 @@ import subprocess
 import os
 import json
 
-def update_json_file(filepath, updates):
-    """Update JSON file with new values, create if doesn't exist"""
-    data = {}
-    try:
-        if os.path.exists(filepath):
-            with open(filepath, 'r') as f:
-                data = json.load(f)
-    except json.JSONDecodeError:
-        pass
-
-    data.update(updates)
-
-    with open(filepath, 'w') as f:
-        json.dump(data, f, indent=2)
+from bulb.utils.logging import update_json_file
 
 class MyManager(multiprocessing.managers.BaseManager):
     pass
