@@ -1,6 +1,23 @@
+import datetime
 import multiprocessing.managers
 import subprocess
 import os
+import json
+
+def update_json_file(filepath, updates):
+    """Update JSON file with new values, create if doesn't exist"""
+    data = {}
+    try:
+        if os.path.exists(filepath):
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+    except json.JSONDecodeError:
+        pass
+
+    data.update(updates)
+
+    with open(filepath, 'w') as f:
+        json.dump(data, f, indent=2)
 
 class MyManager(multiprocessing.managers.BaseManager):
     pass
@@ -9,10 +26,10 @@ def main():
     job_id = os.environ['PBS_JOBID']
 
     MyManager.register("get_action")
-    manager = MyManager(address=("fe01.priv.franklin.lan", 50000), authkey=b"abc")
+    manager = MyManager(address=("fe02.priv.franklin.lan", 50000), authkey=b"abc")
     manager.connect()
 
-    for _ in range(3):  
+    for _ in range(2):  
         action_proxy = manager.get_action(job_id=job_id)
         if action_proxy is None or action_proxy._getvalue() is None:
             print("No more actions available")
@@ -24,19 +41,37 @@ def main():
             'working_dir': action_proxy._getvalue()['working_dir']
         }
 
+        # Create environment variables
+        env_vars = {f"BULB_{k.upper()}": str(v) for k, v in action.items()}
+        env_vars.update(os.environ.copy())  # Keep existing env vars
+
         print(f"Executing: {action['cmd']}")
 
-        with open(f'{action["log_dir"]}/status.txt', 'w+') as f:
-            f.write('Running')
+        # Write meta info to JSON
+        meta_updates = {
+            'job_id': job_id,
+            'hostname': os.environ.get("HOSTNAME", ""),
+            'status': 'Running',
+            'start_time': datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        }
+        update_json_file(f'{action["log_dir"]}/meta.json', meta_updates)
 
-        with open(f'{action["log_dir"]}/output.log', 'w+') as f:
-            result = subprocess.run(action['cmd'], shell=True, stdout=f, stderr=f, text=True, cwd=action['working_dir'])
+        with open(f'{action["log_dir"]}/output.log', 'w+', buffering=1) as f:
+            result = subprocess.run(
+                action['cmd'].split(), 
+                stdout=f,
+                stderr=f,
+                text=True, 
+                cwd=action['working_dir'],
+                env=env_vars
+            )
         
-        with open(f'{action["log_dir"]}/status.txt', 'w+') as f:
-            if result.returncode == 0:
-                f.write('Success')
-            else:
-                f.write('Failed with return code: ' + str(result.returncode))
+        # Update meta info with completion status and end time
+        meta_updates = {
+            'status': 'Success' if result.returncode == 0 else f'Failed ({result.returncode})',
+            'end_time': datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        }
+        update_json_file(f'{action["log_dir"]}/meta.json', meta_updates)
 
         print(result.stdout)
 

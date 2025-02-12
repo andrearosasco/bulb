@@ -46,7 +46,7 @@ def init(
 
 
 @app.command()
-def submit(action:str):
+def submit(action:str, name:str=''):
     # find project root 
 
     try: bulb_root = find_bulb_root()
@@ -64,7 +64,7 @@ def submit(action:str):
             return
 
         
-    api.submit(bulb_root, action)
+    api.submit(bulb_root, action, name)
 
 
 
