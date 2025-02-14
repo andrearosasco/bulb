@@ -50,9 +50,9 @@ def temporary_index_file():
         elif 'GIT_INDEX_FILE' in os.environ:
             del os.environ['GIT_INDEX_FILE']
 
-def run_git_command(*args):
+def run_git_command(*args, cwd=None):
     """Run a Git command and return its output."""
-    result = subprocess.run(args, check=True, text=True, capture_output=True)
+    result = subprocess.run(args, check=True, text=True, capture_output=True, cwd=cwd)
     return result.stdout.strip()
 
 def commit_to_ref(ref_name, commit_message):
@@ -102,7 +102,7 @@ def clone_repo(repo_url, clone_dir):
 
 def fetch_ref(clone_dir, ref_name):
     """Fetch a specific reference from the remote repository."""
-    run_git_command('git', 'fetch', 'origin', ref_name, cwd=clone_dir)
+    run_git_command('git', 'fetch', 'origin', f"{ref_name}:{ref_name}", cwd=clone_dir)
 
 def checkout_ref(clone_dir, ref_name):
     """Checkout to the specified reference."""

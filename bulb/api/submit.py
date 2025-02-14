@@ -70,8 +70,6 @@ def add_to_queue(action_working_dir, log_dir, action_id, action):
     action = {
         'cmd': action,
         'action_id': action_id,
-        'working_dir': action_working_dir,
-        'log_dir': log_dir,
         'repo_url': run_git_command('git', 'config', '--get', 'remote.origin.url')
     }
 
