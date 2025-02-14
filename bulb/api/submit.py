@@ -8,7 +8,8 @@ import uuid
 import multiprocessing.managers
 import json
 
-from bulb.configs.config import ProjectConfig, ExperimentConfig
+from bulb.utils.git import commit_to_ref, push_ref
+from bulb.utils.misc import get_manager_address, get_user_config
     
 
 # Function to set up directories and save git info
@@ -37,30 +38,31 @@ def log_info(log_dir, action, name, action_id):
     with open(f"{log_dir}/meta.json", 'w+') as f:
         json.dump(info, f, indent=2)
 
-    with open(f"{log_dir}/file.patch", 'w') as f:
-        f.write(git_diff)
 
 # Function to save the run script
-def clone_project(project_dir, work_dir, patch_file, link_dirs):
+def push_project(action_id, link_dirs=[]):
 
-    # Set up work directory
-    # Path(work_dir).parent.mkdir(parents=True, exist_ok=True)
-    subprocess.run(f'git clone {project_dir} {work_dir}'.split())
-    subprocess.run(f'git apply --whitespace=nowarn --allow-empty {patch_file}'.split(), cwd=work_dir)
+        ref_name = f"refs/bulb/{action_id}"
+        commit_message = "Bulb automatic commit"
+        # Create a new commit and update the reference
+        commit_hash = commit_to_ref(ref_name, commit_message)
+        # Push the reference to the remote repository
+        push_ref(ref_name)
+            
+        # for d in link_dirs:
+        #     Path(f"{work_dir}/{d}").symlink_to(f"{project_dir}/{d}")
+
     
-    for d in link_dirs:
-        Path(f"{work_dir}/{d}").symlink_to(f"{project_dir}/{d}")
-
-    # git config advice.detachedHead false
-    # git checkout --force --quiet "{EXP_HASH}"
 
 
 def add_to_queue(action_working_dir, log_dir, action):
+    ip, port = get_manager_address()
+
     class MyManager(multiprocessing.managers.BaseManager):
         pass
 
     MyManager.register("add_action")
-    manager = MyManager(address=("localhost", 50000), authkey=b"abc")
+    manager = MyManager(address=(ip, port), authkey=b"abc")
     manager.connect()
 
     action = {
@@ -70,13 +72,16 @@ def add_to_queue(action_working_dir, log_dir, action):
     }
 
     ok = manager.add_action(action)
+    print(ok)
 
 # Main script execution
 def submit(bulb_root, action, name):
-    action_id = str(uuid.uuid4())
-    action_log_dir = f"/fastwork/arosasco/bulb/logs/{action_id}"
-    action_working_dir = f"/fastwork/arosasco/bulb/runs/{action_id}"
+    user_config = get_user_config(bulb_root)
 
-    log_info(log_dir=action_log_dir, action=action, name=name, action_id=action_id)
-    clone_project(bulb_root, action_working_dir, patch_file=f'{action_log_dir}/file.patch', link_dirs=['data'])
+    action_id = str(uuid.uuid4())
+    action_log_dir = f"{user_config.logs_path}/{action_id}"
+    action_working_dir = f"{user_config.runs_path}/{action_id}"
+
+    push_project(action_id, link_dirs=['data'])
     add_to_queue(action_working_dir, action_log_dir, action)
+    log_info(log_dir=action_log_dir, action=action, name=name, action_id=action_id)

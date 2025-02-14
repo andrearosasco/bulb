@@ -5,32 +5,21 @@ import subprocess
 import typer
 
 from bulb.utils.logging import update_json_file
-
-
-def get_manager_address():
-    try:
-        with open(f'{bulb_global_dir}/manager.json') as f:
-            config = json.load(f)
-            ip = config.get('ip', 'localhost')
-            port = config.get('port', 50000)
-    except (FileNotFoundError, json.JSONDecodeError, KeyError):
-        ip = 'localhost'
-        port = 50000
-    return ip, port
-
+from bulb.utils.misc import get_manager_address
+from bulb.configs.config import Config as cfg
 
 class MyManager(multiprocessing.managers.BaseManager):
     pass
 
-bulb_global_dir = Path.home() / ".bulb"
-bulb_global_dir.mkdir(exist_ok=True)
+manager_log_path = cfg.manager_log_path
+manager_log_path.mkdir(exist_ok=True)
 
 app = typer.Typer()
 
 @app.command()
 def start(port:int = 50000):
     
-    with open(f'{bulb_global_dir}/manager.log', 'a+', buffering=1) as f:
+    with open(f'{manager_log_path}/manager.log', 'a+', buffering=1) as f:
         subprocess.Popen(['nohup', 'bulb-manager', '--port', str(port)], 
                          stdout=f, stderr=f)
 
@@ -45,7 +34,7 @@ def stop():
 
 @app.command()
 def config(ip:str = "localhost", port:int = 50000):
-    update_json_file(f'{bulb_global_dir}/manager.json', {'ip': ip, 'port': port})
+    update_json_file(f'{manager_log_path}/manager.json', {'ip': ip, 'port': port})
 
 from rich.console import Console
 from rich.table import Table

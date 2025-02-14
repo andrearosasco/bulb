@@ -1,17 +1,8 @@
-from datetime import datetime as dt
-from multiprocessing import Process
 
-class ProjectConfig:
-    project_dir = ''
-    experiment_root = ''
+from pathlib import Path
 
-    class Test:
-        test = 'test'
-        class A(Process):
-            ciao = 'ciao'
-
-class ExperimentConfig:
-    experiment_name = f'{dt.now().strftime("%Y%m%d_%H%M%S")}'
-    experiment_description = ''
-    runner = 'qsub'
-
+class Config:
+    manager_log_path = Path.home() / ".bulb"
+    runs_path = Path.home() / '.bulb/runs'
+    logs_path = Path.home() / '.bulb/logs'
+    

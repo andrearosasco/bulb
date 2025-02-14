@@ -63,7 +63,6 @@ def submit(action:str, name:str=''):
             print('Could not find project root. Please check https://bulb/initialization for more information.')
             return
 
-        
     api.submit(bulb_root, action, name)
 
 
