@@ -10,6 +10,7 @@ import typer
 from typing_extensions import Annotated
 
 from bulb.cli import manager
+from bulb.cli import runner
 from bulb.utils.logging import logger
 # import debugpy
 # debugpy.listen(5678)
@@ -18,6 +19,7 @@ from bulb.utils.logging import logger
 
 app = typer.Typer()
 app.add_typer(manager.app, name="manager")
+app.add_typer(runner.app, name="runner")
 
 @app.command()
 def init(

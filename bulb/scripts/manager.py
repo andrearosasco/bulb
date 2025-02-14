@@ -2,11 +2,14 @@ import multiprocessing
 import multiprocessing.managers
 from pathlib import Path
 import signal
+import subprocess
 import sys
 import time
 from threading import Lock, Event
 import logging
 import json
+
+from bulb.utils.runner import generate_pbs_script
 
 action_lock = Lock()
 shutdown_event = Event()
@@ -58,6 +61,11 @@ def add_action(action):
         with open(f"{log_dir}/actions.json", "w") as f:
             json.dump(actions, f, indent=4)
         logging.info(f"Action {action['cmd']} added.")
+
+def start_runner():
+    tmp_pbs = generate_pbs_script('gpu_a100')
+    subprocess.Popen([tmp_pbs])
+
 
 def status():
     with action_lock:
@@ -119,6 +127,7 @@ def main():
 
     MyManager.register("get_action", get_action)
     MyManager.register("add_action", add_action)
+    MyManager.register("start_runner", start_runner)
     MyManager.register("status", status)
     MyManager.register("stop", stop)
     MyManager.register("lock", lock)

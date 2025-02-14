@@ -11,6 +11,7 @@ readme = "README.md"
 [tool.poetry.scripts]
 bulb = "bulb.cli.main:main"
 bulb-manager = "bulb.scripts.manager:main"
+bulb-runner = "bulb.scripts.runner:main"
 
 [tool.poetry.dependencies]
 python = "^3.8"
