@@ -8,7 +8,7 @@ import uuid
 import multiprocessing.managers
 import json
 
-from bulb.utils.git import commit_to_ref, push_ref
+from bulb.utils.git import commit_to_ref, push_ref, run_git_command
 from bulb.utils.misc import get_manager_address, get_user_config
     
 
@@ -55,7 +55,7 @@ def push_project(action_id, link_dirs=[]):
     
 
 
-def add_to_queue(action_working_dir, log_dir, action):
+def add_to_queue(action_working_dir, log_dir, action_id, action):
     ip, port = get_manager_address()
 
     class MyManager(multiprocessing.managers.BaseManager):
@@ -65,14 +65,17 @@ def add_to_queue(action_working_dir, log_dir, action):
     manager = MyManager(address=(ip, port), authkey=b"abc")
     manager.connect()
 
+    
+
     action = {
         'cmd': action,
+        'action_id': action_id,
         'working_dir': action_working_dir,
-        'log_dir': log_dir
+        'log_dir': log_dir,
+        'repo_url': run_git_command('git', 'config', '--get', 'remote.origin.url')
     }
 
     ok = manager.add_action(action)
-    print(ok)
 
 # Main script execution
 def submit(bulb_root, action, name):
@@ -83,5 +86,5 @@ def submit(bulb_root, action, name):
     action_working_dir = f"{user_config.runs_path}/{action_id}"
 
     push_project(action_id, link_dirs=['data'])
-    add_to_queue(action_working_dir, action_log_dir, action)
+    add_to_queue(action_working_dir, action_log_dir, action_id, action)
     log_info(log_dir=action_log_dir, action=action, name=name, action_id=action_id)

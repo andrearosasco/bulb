@@ -113,14 +113,9 @@ def pop(idx:int = 0):
 
     action_proxy = manager.get_action(index=idx)
     if action_proxy is None or action_proxy._getvalue() is None:
-        print("No actions available")   
-    else:
-        # Convert proxy object to dictionary
-        action = {
-            'cmd': action_proxy._getvalue()['cmd'],
-            'log_dir': action_proxy._getvalue()['log_dir'],
-            'working_dir': action_proxy._getvalue()['working_dir']
-        }
-        print(action)
+        print("No actions available")
+        return
+    action = action_proxy._getvalue()
+    print(action)
 
 

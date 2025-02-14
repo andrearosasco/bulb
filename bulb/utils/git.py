@@ -1,6 +1,7 @@
 
 
 from pathlib import Path
+import shutil
 from typing import Literal
 import os
 import tempfile
@@ -91,3 +92,18 @@ def push_ref(ref_name, remote="origin"):
     Push the given reference to the specified remote repository.
     """
     run_git_command('git', 'push', remote, ref_name)
+
+def clone_repo(repo_url, clone_dir):
+    """Clone a Git repository to the specified directory."""
+    if os.path.exists(clone_dir):
+        print(f"Directory {clone_dir} already exists.")
+        return
+    run_git_command('git', 'clone', repo_url, clone_dir)
+
+def fetch_ref(clone_dir, ref_name):
+    """Fetch a specific reference from the remote repository."""
+    run_git_command('git', 'fetch', 'origin', ref_name, cwd=clone_dir)
+
+def checkout_ref(clone_dir, ref_name):
+    """Checkout to the specified reference."""
+    run_git_command('git', 'checkout', ref_name, cwd=clone_dir)
