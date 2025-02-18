@@ -6,23 +6,17 @@ import tempfile
 from bulb.utils.misc import get_global_config
 
 def generate_pbs_script(
-    queue_name='gpu_a100',
-    time='03:00:00',
-    select=1,
-    ncpus=15,
-    mpiprocs=15,
-    ngpus=1,
-    job_name="interactive",
-    tmux_path="/work/arosasco/miniforge3/bin/tmux",
-    worker_script="bulb.scripts.runner"
+    pbs_header,
+    resource_group,
+    tmux_path="/work/arosasco/miniforge3/bin/tmux"
 ):
+    worker_script="bulb.scripts.runner"
     # Create the content of the job script (PBS part)
     job_script_content = f'''#!/bin/bash
-#PBS -l select={select}:ncpus={ncpus}:mpiprocs={mpiprocs}:ngpus={ngpus}
-#PBS -l walltime={time}
-#PBS -j oe
-#PBS -N {job_name}
-#PBS -q {queue_name}
+{pbs_header}
+
+# Declare environment variable
+export BULB_RESOURCE_GROUP={resource_group}
 
 SESSION=\\$(echo "job_\\$PBS_JOBID" | cut -d'.' -f1)
 

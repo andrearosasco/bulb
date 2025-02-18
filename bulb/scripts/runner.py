@@ -31,13 +31,14 @@ def main():
     cfg = get_bulb_config()
 
     job_id = os.environ.get('PBS_JOBID', None)
+    resource_group = os.environ.get('BULB_RESOURCE_GROUP', None)
 
     MyManager.register("get_action")
     manager = MyManager(address=(cfg.Manager.ip, cfg.Manager.port), authkey=cfg.Manager.authkey)
     manager.connect()
 
     for _ in range(1):  
-        action_proxy = manager.get_action(job_id=job_id)
+        action_proxy = manager.get_action(job_id=job_id, resource_group=resource_group)
         if action_proxy is None or action_proxy._getvalue() is None:
             print("No more actions available")
             break   

@@ -14,3 +14,25 @@ class Config:
 
         links = {}
         cmd_format = {}
+
+        groups = {
+            'gpu_a100': {
+                'header': """
+                    PBS -l select=1:ncpus=15:mpiprocs=15:ngpus=1
+                    PBS -l walltime=03:00:00
+                    PBS -j oe
+                    PBS -N bulb
+                    PBS -q gpu_a100
+                """,
+            },
+            'a100f': {
+                'header': """
+                    PBS -l select=1:ncpus=15:mpiprocs=15:ngpus=1
+                    PBS -l walltime=03:00:00
+                    PBS -j oe
+                    PBS -N bulb
+                    PBS -q a100f
+                """
+            }
+        }
+    
