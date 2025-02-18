@@ -4,7 +4,7 @@ from pathlib import Path
 import os
 
 import bulb
-from bulb.utils.git import find_git_root, find_bulb_root
+from bulb.utils.project import find_git_root, find_bulb_project_root
 from bulb import api
 import typer
 from typing_extensions import Annotated
@@ -51,7 +51,7 @@ def init(
 def submit(action:str, name:str=''):
     # find project root 
 
-    try: bulb_root = find_bulb_root()
+    try: bulb_root = find_bulb_project_root()
     except FileNotFoundError as e: 
 
         try:
