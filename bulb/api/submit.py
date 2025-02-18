@@ -43,7 +43,7 @@ def add_to_queue(action_id, action):
         'cmd': action,
         'action_id': action_id,
         'repo_url': run_git_command('git', 'config', '--get', 'remote.origin.url'),
-        'tags': [],
+        'tags': 'none',
         'resource_group': 'any',
     }
 

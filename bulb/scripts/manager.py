@@ -10,12 +10,13 @@ import logging
 import json
 
 from bulb.utils.runner import generate_pbs_script
+from bulb.utils.config import get_bulb_config
 
 action_lock = Lock()
 shutdown_event = Event()
 is_locked = multiprocessing.Value('b', False)  # Shared boolean flag for lock state
 
-def get_action(job_id=None, index=0):
+def get_action(job_id=None, resource_group=None, index=0):
     """
     Get an action from the actions list.
     
@@ -32,20 +33,37 @@ def get_action(job_id=None, index=0):
             job_str = f" by job {job_id}" if job_id else ""
             logging.info(f"Action requested{job_str} but system is locked")
             return None
-            
+        
+        # Read actions into DataFrame
         with open(f"{log_dir}/actions.json", "r") as fr:
-            actions = json.load(fr)
-            print(actions)
-
-        if actions and 0 <= index < len(actions):
-            # Remove and return the action at the specified index
-            action = actions.pop(index)
-            job_str = f" to job {job_id}" if job_id else ""
-            logging.info(f"Action {action['cmd']} at index {index} assigned{job_str}")
-            with open(f"{log_dir}/actions.json", "w+") as fw:
-                json.dump(actions, fw, indent=4)
-            return action
-        return None
+            df = pd.DataFrame(json.load(fr))
+            
+        if df.empty:
+            return None
+            
+        df['resource_group'] = df['resource_group'].fillna('any')
+        
+        mask = (
+            (df['resource_group'] == 'any') |
+             df['resource_group'].str.split(':').apply(lambda x: resource_group in x)
+        )
+        matching_df = df[mask]
+        
+        if matching_df.empty or index >= len(matching_df):
+            return None
+            
+        # Get the matching action
+        action = matching_df.iloc[index].to_dict()
+        
+        # Remove the action and save updated list
+        df = df.drop(matching_df.index[index])
+        with open(f"{log_dir}/actions.json", "w+") as fw:
+            json.dump(df.to_dict('records'), fw, indent=4)
+            
+        job_str = f" to job {job_id}" if job_id else ""
+        logging.info(f"Action {action['cmd']} with resource group {action.get('resource_group', 'any')} assigned{job_str}")
+        
+        return action
     
 def add_action(action):
     with action_lock:
@@ -62,8 +80,10 @@ def add_action(action):
             json.dump(actions, f, indent=4)
         logging.info(f"Action {action['cmd']} added.")
 
-def start_runner():
-    tmp_pbs = generate_pbs_script('gpu_a100')
+def start_runner(resource_group_id):
+    cfg = get_bulb_config()
+    group = cfg.Runner.groups[resource_group_id]
+    tmp_pbs = generate_pbs_script(group['header'], resource_group_id)
     subprocess.Popen([tmp_pbs])
 
 
