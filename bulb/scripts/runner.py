@@ -7,7 +7,7 @@ import json
 
 from bulb.utils.git import checkout_ref, clone_repo, fetch_ref
 from bulb.utils.logging import update_json_file
-from bulb.utils.misc import get_default_config, get_global_config
+from bulb.utils.config import get_bulb_config
 
 
 def download_code(repo_url, ref_name, work_dir):
@@ -19,17 +19,21 @@ def link_dirs(work_dir, link_dirs):
     for src, dest in link_dirs.items():
         Path(f"{work_dir}/{dest}").symlink_to(src)
 
+def format_cmd(cmd, cmd_format):
+    for key, value in cmd_format.items():
+        cmd = cmd.replace(key, value)
+
 
 class MyManager(multiprocessing.managers.BaseManager):
     pass
 
 def main():
-    cfg = get_global_config()
+    cfg = get_bulb_config()
 
     job_id = os.environ.get('PBS_JOBID', None)
 
     MyManager.register("get_action")
-    manager = MyManager(address=(cfg.manager_ip, cfg.manager_port), authkey=b"abc")
+    manager = MyManager(address=(cfg.Manager.ip, cfg.Manager.port), authkey=cfg.Manager.authkey)
     manager.connect()
 
     for _ in range(1):  
@@ -40,20 +44,17 @@ def main():
         # Convert proxy object to dictionary
         action = action_proxy._getvalue()
 
-        log_dir = cfg.logs_path / action['action_id']
-        work_dir = cfg.runs_path / action['action_id']
+        log_dir = cfg.Runner.logs_path / action['action_id']
+        work_dir = cfg.Runner.runs_path / action['action_id']
         ref_name = f'refs/bulb/{action["action_id"]}'
 
         download_code(action['repo_url'], ref_name, work_dir)
-        link_dirs(work_dir, cfg.links)
+        link_dirs(work_dir, cfg.Runner.links)
 
         # Create environment variables
         env_vars = {f"BULB_{k.upper()}": str(v) for k, v in action.items()}
         env_vars['BULB_LOG_DIR'] = log_dir
         env_vars.update(os.environ.copy())  # Keep existing env vars
-
-        print(f"Executing: {action['cmd']}")
-        print(f'Logging in {log_dir}')
 
         # Write meta info to JSON
         meta_updates = {
@@ -64,8 +65,10 @@ def main():
         }
         update_json_file(f'{log_dir}/meta.json', meta_updates)
 
-        cmd = action["cmd"]
-        cmd.replace('python', cfg.python)
+        cmd = format_cmd(action["cmd"], cfg.Runner.cmd_format)
+
+        print(f"Executing: {action['cmd']}")
+        print(f'Logging in {log_dir}')
 
         with open(f'{log_dir}/output.log', 'w+', buffering=1) as f:
             result = subprocess.run(

@@ -5,33 +5,29 @@ import subprocess
 import typer
 
 from bulb.utils.logging import update_json_file
-from bulb.utils.misc import get_manager_address
-from bulb.configs.config import Config as cfg
+from bulb.utils.config import get_bulb_config
 
 class MyManager(multiprocessing.managers.BaseManager):
     pass
-
-manager_log_path = cfg.manager_log_path
-manager_log_path.mkdir(exist_ok=True)
 
 app = typer.Typer()
 
 @app.command()
 def start():
-    ip, port = get_manager_address()
+    cfg = get_bulb_config()
 
     MyManager.register("start_runner")
-    manager = MyManager(address=(ip, port), authkey=b"abc")
+    manager = MyManager(address=(cfg.Manager.ip, cfg.Manager.port), authkey=cfg.Manager.authkey)
     manager.connect()
     manager.start_runner()
     print(f"Runner started")
 
 @app.command()
 def list():
-    ip, port = get_manager_address()
+    cfg = get_bulb_config()
 
     MyManager.register("list_runner")
-    manager = MyManager(address=(ip, port), authkey=b"abc")
+    manager = MyManager(address=(cfg.Manager.ip, cfg.Manager.port), authkey=cfg.Manager.authkey)
     manager.connect()
     runner_list = manager.list_runner()._getvalue()
     print(runner_list)

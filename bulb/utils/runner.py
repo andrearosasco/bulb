@@ -1,5 +1,6 @@
 import os
 import stat
+import sys
 import tempfile
 
 from bulb.utils.misc import get_global_config
@@ -15,7 +16,6 @@ def generate_pbs_script(
     tmux_path="/work/arosasco/miniforge3/bin/tmux",
     worker_script="bulb.scripts.runner"
 ):
-    cfg = get_global_config()
     # Create the content of the job script (PBS part)
     job_script_content = f'''#!/bin/bash
 #PBS -l select={select}:ncpus={ncpus}:mpiprocs={mpiprocs}:ngpus={ngpus}
@@ -27,7 +27,7 @@ def generate_pbs_script(
 SESSION=\\$(echo "job_\\$PBS_JOBID" | cut -d'.' -f1)
 
 $tmux -L \\$SESSION  new-session -d -s \\$SESSION
-$tmux -L \\$SESSION  send-keys -t \\$SESSION "{cfg.python} -m {worker_script}; qdel \\$PBS_JOBID" C-m
+$tmux -L \\$SESSION  send-keys -t \\$SESSION "{sys.executable} -m {worker_script}; qdel \\$PBS_JOBID" C-m
 
 tail -f /dev/null
 '''

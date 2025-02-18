@@ -5,19 +5,20 @@ import subprocess
 import typer
 
 from bulb.utils.logging import update_json_file
-from bulb.utils.misc import get_manager_address
-from bulb.configs.config import Config as cfg
+from bulb.utils.config import get_bulb_config
 
 class MyManager(multiprocessing.managers.BaseManager):
     pass
 
-manager_log_path = cfg.manager_log_path
-manager_log_path.mkdir(exist_ok=True)
+
 
 app = typer.Typer()
 
 @app.command()
 def start(port:int = 50000):
+    cfg = get_bulb_config()
+    manager_log_path = cfg.Manager.log_path
+    manager_log_path.mkdir(exist_ok=True)
     
     with open(f'{manager_log_path}/manager.log', 'a+', buffering=1) as f:
         subprocess.Popen(['nohup', 'bulb-manager', '--port', str(port)], 
@@ -25,10 +26,10 @@ def start(port:int = 50000):
 
 @app.command()
 def stop():
-    ip, port = get_manager_address()
+    cfg = get_bulb_config()
 
     MyManager.register("stop")
-    manager = MyManager(address=(ip, port), authkey=b"abc")
+    manager = MyManager(address=(cfg.Manager.ip, cfg.Manager.port), authkey=cfg.Manager.authkey)
     manager.connect()
     manager.stop()
 
@@ -40,10 +41,10 @@ from rich.console import Console
 from rich.table import Table
 @app.command()
 def status():
-    ip, port = get_manager_address()
+    cfg = get_bulb_config()
 
     MyManager.register("status")
-    manager = MyManager(address=(ip, port), authkey=b"abc")
+    manager = MyManager(address=(cfg.Manager.ip, cfg.Manager.port), authkey=cfg.Manager.authkey)
     manager.connect()
     status_list = manager.status()._getvalue()
 
@@ -70,29 +71,31 @@ def status():
 
 @app.command()
 def lock():
-    ip, port = get_manager_address()
+    cfg = get_bulb_config()
 
     MyManager.register("lock")
-    manager = MyManager(address=(ip, port), authkey=b"abc")
+    manager = MyManager(address=(cfg.Manager.ip, cfg.Manager.port), authkey=cfg.Manager.authkey)
     manager.connect()
     manager.lock()
 
 @app.command()
 def unlock():
-    ip, port = get_manager_address()
+    cfg = get_bulb_config()
 
     MyManager.register("unlock")
-    manager = MyManager(address=(ip, port), authkey=b"abc")
+    manager = MyManager(address=(cfg.Manager.ip, cfg.Manager.port), authkey=cfg.Manager.authkey)
     manager.connect()
     manager.unlock()
 
 @app.command()
 def submit(action:str):
+    cfg = get_bulb_config()
+
     class MyManager(multiprocessing.managers.BaseManager):
         pass
 
     MyManager.register("add_action")
-    manager = MyManager(address=("localhost", 50000), authkey=b"abc")
+    manager = MyManager(address=(cfg.Manager.ip, cfg.Manager.port), authkey=cfg.Manager.authkey)
     manager.connect()
 
     action = {
@@ -105,10 +108,10 @@ def submit(action:str):
 
 @app.command()
 def pop(idx:int = 0):
-    ip, port = get_manager_address()
+    cfg = get_bulb_config()
 
     MyManager.register("get_action")
-    manager = MyManager(address=(ip, port), authkey=b"abc")
+    manager = MyManager(address=(cfg.Manager.ip, cfg.Manager.port), authkey=cfg.Manager.authkey)
     manager.connect()
 
     action_proxy = manager.get_action(index=idx)
