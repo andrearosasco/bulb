@@ -13,14 +13,14 @@ class MyManager(multiprocessing.managers.BaseManager):
 app = typer.Typer()
 
 @app.command()
-def start(group: str):
+def start(group: str, num_runner: int = 1):
     cfg = config.bulb_config
 
     MyManager.register("start_runner")
     manager = MyManager(address=(cfg.Manager.ip, cfg.Manager.port), authkey=cfg.Manager.authkey)
     manager.connect()
-    manager.start_runner(group)
-    print(f"Runner started")
+    for _ in range(num_runner):
+        manager.start_runner(group)
 
 @app.command()
 def list():
