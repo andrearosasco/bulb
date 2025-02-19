@@ -3,8 +3,6 @@ import stat
 import sys
 import tempfile
 
-from bulb.utils.misc import get_global_config
-
 def generate_pbs_script(
     pbs_header,
     resource_group,
