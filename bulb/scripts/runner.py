@@ -5,6 +5,7 @@ import subprocess
 import os
 import json
 
+from bulb.utils import project
 from bulb.utils.git import checkout_ref, clone_repo, fetch_ref
 from bulb.utils.logging import update_json_file
 import bulb.utils.config as config
@@ -28,6 +29,8 @@ class MyManager(multiprocessing.managers.BaseManager):
     pass
 
 def main():
+    project.load_paths()
+    config.load_config()
     cfg = config.bulb_config
 
     job_id = os.environ.get('PBS_JOBID', None)
