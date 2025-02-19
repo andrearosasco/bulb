@@ -9,6 +9,8 @@ from threading import Lock, Event
 import logging
 import json
 
+import pandas as pd 
+
 from bulb.utils import project
 from bulb.utils.runner import generate_pbs_script
 import bulb.utils.config as config

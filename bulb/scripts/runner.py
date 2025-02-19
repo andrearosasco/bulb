@@ -23,6 +23,7 @@ def link_dirs(work_dir, link_dirs):
 def format_cmd(cmd, cmd_format):
     for key, value in cmd_format.items():
         cmd = cmd.replace(key, value)
+    return cmd
 
 
 class MyManager(multiprocessing.managers.BaseManager):
