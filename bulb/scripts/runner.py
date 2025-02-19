@@ -38,7 +38,7 @@ def main():
     resource_group = os.environ.get('BULB_RESOURCE_GROUP', None)
 
     MyManager.register("get_action")
-    manager = MyManager(address=(cfg.Manager.ip, cfg.Manager.port), authkey=cfg.Manager.authkey)
+    manager = MyManager(address=(cfg.Queue.ip, cfg.Queue.port), authkey=cfg.Queue.authkey)
     manager.connect()
 
     for _ in range(1):

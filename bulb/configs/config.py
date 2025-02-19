@@ -32,3 +32,7 @@ class Config:
             }
         }
     
+    class Queue:
+        ip = 'localhost'
+        port = 50000
+        authkey = b"abc"
