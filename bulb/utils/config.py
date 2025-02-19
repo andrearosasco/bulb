@@ -7,60 +7,34 @@ import bulb.utils.project as project
 import sys
 import importlib.util
 from pathlib import Path
+from clearconf import BaseConfig
 
-def get_bulb_config():
+bulb_config = None
+default_config = None
+global_config = None
+project_config = None
+
+def load_config():
+    global bulb_config, default_config, global_config, project_config
     # Load all available configs
     default_config = get_default_config()
+    default_config = type('DefaultConfig', (default_config, BaseConfig), {})
+    bulb_config = default_config
     
     global_config = None
-    global_config_path = Path.home() / '.bulb/config.py'
+    global_config_path = Path(project.global_bulb_dir) / 'config.py'
     if global_config_path.exists():
         global_config = _load_config_from_path(global_config_path)
+        bulb_config = type('BulbConfig', (global_config, bulb_config), {})
+        global_config = type('GlobalConfig', (global_config, BaseConfig), {})
     
-    user_config = None
-    if project.bulb_project_root is not None:
-        user_config_path = Path(project.bulb_project_root) / '.bulb/config.py'
-        if user_config_path.exists():
-            user_config = _load_config_from_path(user_config_path)
-    
-    # Collect configs in precedence order: user > global > default
-    configs = [c for c in [user_config, global_config, default_config] if c is not None]
-    
-    # Recursively merge configurations
-    MergedConfig = _merge_config_classes(*configs)
-    return MergedConfig
-
-def _merge_config_classes(*config_classes):
-    """Recursively merge configuration classes with nested class support"""
-    merged_attrs = {}
-
-    # Collect all unique attribute names from all config classes
-    all_attr_names = set()
-    for config_cls in config_classes:
-        all_attr_names.update(dir(config_cls))
-    all_attr_names = [n for n in all_attr_names if not n.startswith('__')]
-
-    for attr_name in all_attr_names:
-        # Collect values from all configs in precedence order
-        values = []
-        for config_cls in config_classes:
-            if hasattr(config_cls, attr_name):
-                values.append(getattr(config_cls, attr_name))
-
-        # Handle nested classes recursively
-        if all(isinstance(v, type) for v in values):
-            merged_attrs[attr_name] = _merge_config_classes(*values)
-        else:
-            # Take the first non-class value (highest precedence)
-            for v in values:
-                if not isinstance(v, type):
-                    merged_attrs[attr_name] = v
-                    break
-            else:
-                # If all are classes but we're in else clause, take first
-                merged_attrs[attr_name] = values[0]
-
-    return type('MergedConfig', (), merged_attrs)
+    project_config = None
+    if project.project_bulb_dir is not None:
+        project_config_path = Path(project.project_bulb_dir) / 'config.py'
+        if project_config_path.exists():
+            project_config = _load_config_from_path(project_config_path)
+            bulb_config = type('BulbConfig', (project_config, bulb_config), {})
+            project_config = type('ProjectConfig', (project_config, BaseConfig), {})
 
 def get_default_config():
     import bulb.configs.config as default_config

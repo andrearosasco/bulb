@@ -1,23 +1,21 @@
 from pathlib import Path
-from pathlib import Path
 import os
 import bulb
+from shutil import copy
 
 
-def get_configs_path():
-    configs_path = Path(os.path.abspath(bulb.__file__)).parent / "configs"
-    return configs_path
+configs_path = Path(os.path.abspath(bulb.__file__)).parent / "configs/config.py"
 
 
-def init(project_root: Path, exists_ok: bool = False):
+def init(project_root: Path):
     # find project root 
     bulb_dir = project_root / ".bulb"
 
     if bulb_dir.exists() and not bulb_dir.is_dir():
         raise FileExistsError(f"{bulb_dir} already exists and is not a directory.")
-    
-    if bulb_dir.is_dir() and not exists_ok:
-        raise FileExistsError(f"Project already initialized at {project_root}.")
-    
-    bulb_dir.mkdir()
-    (bulb_dir / 'configs').symlink_to(get_configs_path())
+
+    if not bulb_dir.exists():
+        bulb_dir.mkdir()
+
+    if not (bulb_dir / 'config.py').exists():
+        copy(configs_path, bulb_dir / 'config.py')

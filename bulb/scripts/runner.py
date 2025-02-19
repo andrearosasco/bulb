@@ -7,7 +7,7 @@ import json
 
 from bulb.utils.git import checkout_ref, clone_repo, fetch_ref
 from bulb.utils.logging import update_json_file
-from bulb.utils.config import get_bulb_config
+import bulb.utils.config as config
 
 
 def download_code(repo_url, ref_name, work_dir):
@@ -28,7 +28,7 @@ class MyManager(multiprocessing.managers.BaseManager):
     pass
 
 def main():
-    cfg = get_bulb_config()
+    cfg = config.bulb_config
 
     job_id = os.environ.get('PBS_JOBID', None)
     resource_group = os.environ.get('BULB_RESOURCE_GROUP', None)
@@ -37,7 +37,7 @@ def main():
     manager = MyManager(address=(cfg.Manager.ip, cfg.Manager.port), authkey=cfg.Manager.authkey)
     manager.connect()
 
-    for _ in range(1):  
+    for _ in range(1):
         action_proxy = manager.get_action(job_id=job_id, resource_group=resource_group)
         if action_proxy is None or action_proxy._getvalue() is None:
             print("No more actions available")

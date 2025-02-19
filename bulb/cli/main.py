@@ -1,13 +1,19 @@
+import json
 import logging
 import shutil
 from pathlib import Path
 import os
+import rich
 
 import bulb
-from bulb.utils.project import find_git_root, find_bulb_project_root
+import bulb.utils.config as cfg
+import bulb.utils.project as project
+
 from bulb import api
 import typer
 from typing_extensions import Annotated
+
+from clearconf import BaseConfig
 
 from bulb.cli import manager
 from bulb.cli import runner
@@ -22,59 +28,48 @@ app.add_typer(manager.app, name="manager")
 app.add_typer(runner.app, name="runner")
 
 @app.command()
-def init(
-
-    verbose:bool=False
-    ):
-    """
-    Initialize Bulb
-
-    Creates a .bulb directory in your project root.
-    If not specifided, the project root is determined by searching for a .git directory in the current or parent directories.
-    If a .git directory is not found Bulb is initialized in the current directory.
-    """
-    # find project root 
-    try:
-        project_root = find_git_root()
-    except FileNotFoundError as e:
-        logging.info('Could not determine project root')
-        project_root = Path.cwd()
-
-    try:
-        api.init(project_root)
-        logging.info(f"Initialized bulb project at {project_root}.")
-    except FileExistsError as e:
-        logger.error(e, extra={'format': 'cli'})
-
+def status():
+    pass
 
 @app.command()
-def submit(action:str, name:str=''):
-    # find project root 
+def config(
+    project: Annotated[bool, typer.Option("--project", help="Display project config")] = False,
+    default: Annotated[bool, typer.Option("--default", help="Display default config")] = False,
+    global_: Annotated[bool, typer.Option("--global", help="Display global config")] = False,
+):
+    options = sum([project, default, global_])
+    if options > 1:
+        logger.error("Please specify only one config option")
+        raise typer.Exit(1)
+        
+    if project:
+        if cfg.project_config:
+            rich.print(json.dumps(cfg.project_config.to_dict(), indent=4))
+        else:
+            logger.warning("No project config found")
+    elif default:
+        rich.print(json.dumps(cfg.default_config.to_dict(), indent=4))
+    elif global_:
+        rich.print(json.dumps(cfg.global_config.to_dict(), indent=4))
+    else:
+        rich.print(json.dumps(cfg.bulb_config.to_dict(), indent=4))
 
-    try: bulb_root = find_bulb_project_root()
-    except FileNotFoundError as e: 
-
-        try:
-            git_root = find_git_root()
-            try:
-                api.init(git_root)
-                bulb_root = git_root
-            except FileExistsError as e:
-                print(e)  # this should happen only if .bulb is a file
-        except FileNotFoundError as e:
-            print('Could not find project root. Please check https://bulb/initialization for more information.')
-            return
-
-    api.submit(bulb_root, action, name)
+@app.command()
+def submit(action:str, tags:str='', resource_group:str='any'):
+    if project.project_root is None:
+        logger.error("Jobs can only be submitted from inside a git repo.")
+        return
+    api.submit(action, tags, resource_group)
 
 
 @app.callback()
-def doc():
+def setup(verbose: bool = False):
     """
     bulb CLI can be used to prepare
     and run your experiments.
     """
-
+    project.load_paths()
+    cfg.load_config()
 
 def main():
     app()

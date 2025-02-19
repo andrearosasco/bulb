@@ -10,7 +10,7 @@ import logging
 import json
 
 from bulb.utils.runner import generate_pbs_script
-from bulb.utils.config import get_bulb_config
+import bulb.utils.config as config
 
 action_lock = Lock()
 shutdown_event = Event()
@@ -81,7 +81,7 @@ def add_action(action):
         logging.info(f"Action {action['cmd']} added.")
 
 def start_runner(resource_group_id):
-    cfg = get_bulb_config()
+    cfg = config.bulb_config
     group = cfg.Runner.groups[resource_group_id]
     tmp_pbs = generate_pbs_script(group['header'], resource_group_id)
     subprocess.Popen([tmp_pbs])

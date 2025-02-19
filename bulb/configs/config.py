@@ -17,22 +17,18 @@ class Config:
 
         groups = {
             'gpu_a100': {
-                'header': """
-                    PBS -l select=1:ncpus=15:mpiprocs=15:ngpus=1
-                    PBS -l walltime=03:00:00
-                    PBS -j oe
-                    PBS -N bulb
-                    PBS -q gpu_a100
-                """,
+                'header': ('#PBS -l select=1:ncpus=15:mpiprocs=15:ngpus=1\n'
+                           '#PBS -l walltime=03:00:00\n'
+                           '#PBS -j oe\n'
+                           '#PBS -N bulb\n'
+                           '#PBS -q gpu_a100\n')
             },
             'a100f': {
-                'header': """
-                    PBS -l select=1:ncpus=15:mpiprocs=15:ngpus=1
-                    PBS -l walltime=03:00:00
-                    PBS -j oe
-                    PBS -N bulb
-                    PBS -q a100f
-                """
+                'header': ('#PBS -l select=1:ncpus=15:mpiprocs=15:ngpus=1\n'
+                           '#PBS -l walltime=03:00:00\n'
+                           '#PBS -j oe\n'
+                           '#PBS -N bulb\n'
+                           '#PBS -q a100f\n')
             }
         }
     
