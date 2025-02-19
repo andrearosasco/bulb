@@ -30,6 +30,17 @@ def get_action(job_id=None, resource_group=None, index=0):
     Returns:
         dict or None: The requested action if available, None otherwise
     """
+    project.load_paths()
+    config.load_config()
+    cfg = config.bulb_config
+
+    if cfg.Manager.type == 'proxy':
+        MyManager.register("get_action")
+        manager = MyManager(address=(cfg.Manager.src_ip, cfg.Manager.src_port), authkey=cfg.Manager.src.authkey)
+        manager.connect()
+        action = manager.get_action(job_id=job_id, resource_group=resource_group, index=index)
+        return action
+
     with action_lock:
         # Check if system is locked
         if is_locked.value:
