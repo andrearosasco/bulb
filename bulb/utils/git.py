@@ -84,3 +84,49 @@ def fetch_ref(clone_dir, ref_name):
 def checkout_ref(clone_dir, ref_name):
     """Checkout to the specified reference."""
     run_git_command('git', 'checkout', ref_name, cwd=clone_dir)
+
+
+def git_pull(repo_path: str) -> bool:
+    """
+    Pull latest changes from remote repository.
+    
+    Args:
+        repo_path: Path to the git repository
+    
+    Returns:
+        Boolean indicating success or failure
+    """
+    if not os.path.exists(os.path.join(repo_path, '.git')):
+        print(f"Error: {repo_path} is not a git repository")
+        return False
+    
+    # Fetch latest changes
+    run_git_command('git', 'fetch', 'origin', 'main', cwd=repo_path)
+    # Pull changes
+    run_git_command('git', 'pull', 'origin', 'main', cwd=repo_path)
+    print("Successfully pulled latest changes")
+    return True
+
+def git_push(repo_path: str, commit_message: str) -> bool:
+    """
+    Stage all changes, commit, and push to remote repository.
+    
+    Args:
+        repo_path: Path to the git repository
+        commit_message: Commit message
+    
+    Returns:
+        Boolean indicating success or failure
+    """
+    if not os.path.exists(os.path.join(repo_path, '.git')):
+        print(f"Error: {repo_path} is not a git repository")
+        return False
+    
+    # Stage all changes
+    run_git_command('git', 'add', '.', cwd = repo_path)
+    # Commit changes
+    run_git_command('git', 'commit', '-m', 'synching experiments', cwd = repo_path)
+    # Push changes
+    run_git_command('git', 'push', 'origin', 'main', cwd = repo_path)  
+    print("Successfully pushed changes")
+    return True

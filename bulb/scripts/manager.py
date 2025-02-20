@@ -44,8 +44,7 @@ def get_action(job_id=None, resource_group=None, index=0):
     project.load_paths()
     config.load_config()
     cfg = config.bulb_config
-
-    print('action request')
+    
     if cfg.Manager.type == 'proxy':
         print(f'Getting actions from {cfg.Manager.src_ip}')
         
@@ -55,9 +54,7 @@ def get_action(job_id=None, resource_group=None, index=0):
         ProxyManager.register("get_action")
         pmanager = ProxyManager(address=(cfg.Manager.src_ip, cfg.Manager.src_port), authkey=cfg.Manager.src_authkey)
         pmanager.connect()
-        print('Connected')
         action = pmanager.get_action(job_id=job_id, resource_group=resource_group, index=index)
-        print('action obtained')
         action = action._getvalue()
 
         log_dir = cfg.Runner.logs_path / action['action_id']

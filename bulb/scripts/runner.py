@@ -6,9 +6,10 @@ import os
 import json
 
 from bulb.utils import project
-from bulb.utils.git import checkout_ref, clone_repo, fetch_ref
+from bulb.utils.git import checkout_ref, clone_repo, fetch_ref, git_pull, git_push
 from bulb.utils.logging import update_json_file
 import bulb.utils.config as config
+from bulb.utils.runner import pbs_del
 
 
 def download_code(repo_url, ref_name, work_dir):
@@ -85,6 +86,9 @@ def main():
                 cwd=work_dir,
                 env=env_vars
             )
+
+        git_pull(cfg.Runner.logs_path)
+        git_push(cfg.Runner.logs_path)
         
         # Update meta info with completion status and end time
         meta_updates = {
@@ -94,6 +98,8 @@ def main():
 
         update_json_file(f'{log_dir}/meta.json', meta_updates)
         print(result.stdout)
+
+        pbs_del(job_id)
 
 if __name__ == "__main__":
     main()

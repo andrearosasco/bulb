@@ -1,7 +1,12 @@
 import os
 import stat
+import subprocess
 import sys
 import tempfile
+
+def pbs_del(job_id):
+    """Delete a PBS job by ID."""
+    subprocess.run(["qdel", job_id], check=True, text=True, capture_output=True, cwd=cwd)
 
 def generate_pbs_script(
     pbs_header,
@@ -15,17 +20,11 @@ def generate_pbs_script(
 
 # Declare environment variable
 export BULB_RESOURCE_GROUP={resource_group}
-
-SESSION=\\$(echo "job_\\$PBS_JOBID" | cut -d'.' -f1)
-
-{sys.executable} -m {worker_script}; qdel \\$PBS_JOBID
-
+{sys.executable} -m {worker_script};
 '''
 
     # Create the wrapper script content
     wrapper_script_content = f'''#!/bin/bash
-
-tmux="{tmux_path}"
 
 JOB_SCRIPT=$(cat <<EOF
 {job_script_content}
