@@ -18,10 +18,8 @@ export BULB_RESOURCE_GROUP={resource_group}
 
 SESSION=\\$(echo "job_\\$PBS_JOBID" | cut -d'.' -f1)
 
-$tmux -L \\$SESSION  new-session -d -s \\$SESSION
-$tmux -L \\$SESSION  send-keys -t \\$SESSION "{sys.executable} -m {worker_script}; qdel \\$PBS_JOBID" C-m
+{sys.executable} -m {worker_script}; qdel \\$PBS_JOBID
 
-tail -f /dev/null
 '''
 
     # Create the wrapper script content

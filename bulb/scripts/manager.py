@@ -14,6 +14,17 @@ import pandas as pd
 from bulb.utils import project
 from bulb.utils.runner import generate_pbs_script
 import bulb.utils.config as config
+from bulb.utils.git import checkout_ref, clone_repo, fetch_ref
+
+
+def download_code(repo_url, ref_name, work_dir):
+        clone_repo(repo_url, work_dir)
+        fetch_ref(work_dir, ref_name)
+        checkout_ref(work_dir, ref_name)
+
+def link_dirs(work_dir, link_dirs):
+    for src, dest in link_dirs.items():
+        Path(f"{work_dir}/{dest}").symlink_to(src)
 
 action_lock = Lock()
 shutdown_event = Event()
@@ -34,11 +45,27 @@ def get_action(job_id=None, resource_group=None, index=0):
     config.load_config()
     cfg = config.bulb_config
 
+    print('action request')
     if cfg.Manager.type == 'proxy':
-        MyManager.register("get_action")
-        manager = MyManager(address=(cfg.Manager.src_ip, cfg.Manager.src_port), authkey=cfg.Manager.src.authkey)
-        manager.connect()
-        action = manager.get_action(job_id=job_id, resource_group=resource_group, index=index)
+        print(f'Getting actions from {cfg.Manager.src_ip}')
+        
+
+        class ProxyManager(multiprocessing.managers.BaseManager):
+            pass
+        ProxyManager.register("get_action")
+        pmanager = ProxyManager(address=(cfg.Manager.src_ip, cfg.Manager.src_port), authkey=cfg.Manager.src_authkey)
+        pmanager.connect()
+        print('Connected')
+        action = pmanager.get_action(job_id=job_id, resource_group=resource_group, index=index)
+        print('action obtained')
+        action = action._getvalue()
+
+        log_dir = cfg.Runner.logs_path / action['action_id']
+        work_dir = cfg.Runner.runs_path / action['action_id']
+        ref_name = f'refs/bulb/{action["action_id"]}'
+
+        download_code(action['repo_url'], ref_name, work_dir)
+        link_dirs(work_dir, cfg.Runner.links)
         return action
 
     with action_lock:

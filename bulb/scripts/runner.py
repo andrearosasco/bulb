@@ -53,8 +53,9 @@ def main():
         work_dir = cfg.Runner.runs_path / action['action_id']
         ref_name = f'refs/bulb/{action["action_id"]}'
 
-        download_code(action['repo_url'], ref_name, work_dir)
-        link_dirs(work_dir, cfg.Runner.links)
+        if cfg.Manager.type != 'proxy':
+            download_code(action['repo_url'], ref_name, work_dir)
+            link_dirs(work_dir, cfg.Runner.links)
 
         # Create environment variables
         env_vars = {f"BULB_{k.upper()}": str(v) for k, v in action.items()}
