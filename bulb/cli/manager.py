@@ -38,7 +38,7 @@ def stop(ip:str = None, port:int = None, authkey:str = None):
 
 
     MyManager.register("stop")
-    manager = MyManager(address=(cfg.Manager.ip, cfg.Manager.port), authkey=cfg.Manager.authkey)
+    manager = MyManager(address=(ip, port), authkey=authkey)
     manager.connect()
     manager.stop()
 
@@ -126,5 +126,25 @@ def pop(idx:int = 0):
         return
     action = action_proxy._getvalue()
     print(action)
+
+@app.command()
+def sync(ip:str = None, port:int = None, authkey:str = None):
+    cfg = config.bulb_config
+    if ip is None:
+        ip = cfg.Manager.ip
+    
+    if port is None:
+        port = cfg.Manager.port
+
+    if authkey is None:
+        authkey = cfg.Manager.authkey
+
+
+    cfg = config.bulb_config
+
+    MyManager.register("sync_logs")
+    manager = MyManager(address=(ip, port), authkey=authkey)
+    manager.connect()
+    manager.sync_logs()
 
 
