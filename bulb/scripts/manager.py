@@ -14,7 +14,7 @@ import pandas as pd
 from bulb.utils import project
 from bulb.utils.runner import generate_pbs_script
 import bulb.utils.config as config
-from bulb.utils.git import checkout_ref, clone_repo, fetch_ref
+from bulb.utils.git import checkout_ref, clone_repo, fetch_ref, git_pull, git_push
 
 
 def download_code(repo_url, ref_name, work_dir):
@@ -129,6 +129,15 @@ def start_runner(resource_group_id):
     subprocess.Popen([tmp_pbs])
 
 
+def sync_logs():
+    project.load_paths()
+    config.load_config()
+    cfg = config.bulb_config
+
+    git_pull(cfg.Runner.logs_path)
+    git_push(cfg.Runner.logs_path)
+
+
 def status():
     with action_lock:
         with open(f"{log_dir}/actions.json", "r") as f:
@@ -190,6 +199,7 @@ def main():
     MyManager.register("get_action", get_action)
     MyManager.register("add_action", add_action)
     MyManager.register("start_runner", start_runner)
+    MyManager.register("sync_logs", sync_logs)
     MyManager.register("status", status)
     MyManager.register("stop", stop)
     MyManager.register("lock", lock)

@@ -107,7 +107,7 @@ def git_pull(repo_path: str) -> bool:
     print("Successfully pulled latest changes")
     return True
 
-def git_push(repo_path: str, commit_message: str) -> bool:
+def git_push(repo_path: str) -> bool:
     """
     Stage all changes, commit, and push to remote repository.
     
