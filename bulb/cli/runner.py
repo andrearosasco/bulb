@@ -27,7 +27,7 @@ def start(group: str, num_runner: int = 1, ip: str = None, port: int = None, aut
         authkey = cfg.Manager.authkey
 
     MyManager.register("start_runner")
-    manager = MyManager(address=(cfg.Manager.ip, cfg.Manager.port), authkey=cfg.Manager.authkey)
+    manager = MyManager(address=(ip, port), authkey=authkey)
     manager.connect()
     for _ in range(num_runner):
         manager.start_runner(group)
