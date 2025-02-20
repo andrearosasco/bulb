@@ -44,6 +44,8 @@ def get_action(job_id=None, resource_group=None, index=0):
     project.load_paths()
     config.load_config()
     cfg = config.bulb_config
+
+    log_dir = cfg.Manager.log_path
     
     if cfg.Manager.type == 'proxy':
         print(f'Getting actions from {cfg.Manager.src_ip}')
