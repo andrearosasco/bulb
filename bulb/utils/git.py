@@ -30,7 +30,9 @@ def temporary_index_file():
 def run_git_command(*args, cwd=None):
     """Run a Git command and return its output."""
     result = subprocess.run(args, check=True, text=True, capture_output=True, cwd=cwd)
-    return result.stdout.strip()
+    stdout = result.stdout.strip()
+    print(stdout)
+    return stdout
 
 def commit_to_ref(ref_name, commit_message):
     """
@@ -107,7 +109,7 @@ def git_pull(repo_path: str) -> bool:
     print("Successfully pulled latest changes")
     return True
 
-def git_push(repo_path: str, commit_message: str) -> bool:
+def git_push(repo_path: str) -> bool:
     """
     Stage all changes, commit, and push to remote repository.
     
