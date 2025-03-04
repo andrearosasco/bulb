@@ -39,7 +39,7 @@ def add_to_queue(action_id, action, tags, resource_group):
         'action_id': action_id,
         'repo_url': git_remote,
         'tags': 'none',
-        'resource_group': 'any',
+        'resource_group': resource_group,
     }
 
     ok = manager.add_action(action)

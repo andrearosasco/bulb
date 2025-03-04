@@ -44,7 +44,7 @@ def commit_to_ref(ref_name, commit_message):
         run_git_command('git', 'read-tree', 'HEAD')
         
         # Get the list of modified files
-        modified_files = run_git_command('git', 'diff', '--name-only').splitlines()
+        modified_files = run_git_command('git', 'diff', '--name-only', 'HEAD').splitlines()
         
         if modified_files:
             # Add modified files to the temporary index
@@ -77,11 +77,11 @@ def clone_repo(repo_url, clone_dir):
     if os.path.exists(clone_dir):
         print(f"Directory {clone_dir} already exists.")
         return
-    run_git_command('git', 'clone', repo_url, clone_dir)
+    run_git_command('git', 'clone', '--depth', '1', repo_url, clone_dir)
 
 def fetch_ref(clone_dir, ref_name):
     """Fetch a specific reference from the remote repository."""
-    run_git_command('git', 'fetch', 'origin', f"{ref_name}:{ref_name}", cwd=clone_dir)
+    run_git_command('git', 'fetch', '--unshallow', 'origin', f"{ref_name}:{ref_name}", cwd=clone_dir)
 
 def checkout_ref(clone_dir, ref_name):
     """Checkout to the specified reference."""
