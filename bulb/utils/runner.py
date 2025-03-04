@@ -6,7 +6,7 @@ import tempfile
 
 def pbs_del(job_id):
     """Delete a PBS job by ID."""
-    subprocess.run(["qdel", job_id], check=True, text=True, capture_output=True, cwd=cwd)
+    subprocess.run(["qdel", job_id], check=True, text=True, capture_output=True)
 
 def generate_pbs_script(
     pbs_header,
