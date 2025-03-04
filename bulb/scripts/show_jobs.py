@@ -1,11 +1,15 @@
 import json
 from pathlib import Path
+from typing import Callable, List
 import pandas as pd
 from textual.app import App, ComposeResult
 from textual.containers import Container
 from textual.widgets import DataTable, Input, Static
 from textual import on
 from textual.reactive import var
+from textual.widgets import DataTable, Footer, Header, Input, Label, Select, Button
+from textual.containers import Horizontal, Vertical
+from textual.screen import ModalScreen
 
 class LogViewerApp(App):
     CSS = """
@@ -49,8 +53,8 @@ class LogViewerApp(App):
         self.update_table()
 
     def load_data(self) -> None:
-        log_dir = Path("/home/aros/projects/diffusion-film-robot/.bulb/robodiff_logs")
-        meta_files = list(log_dir.glob("*/Meta.json"))
+        log_dir = Path("/home/aros/projects/diffusion_policy/.bulb/robodiff_logs")
+        meta_files = list(log_dir.glob("*/meta.json"))
         
         data = []
         for meta_file in meta_files:
@@ -72,7 +76,7 @@ class LogViewerApp(App):
         
         if not self.filtered_data.empty:
             # Convert only visible columns to strings for display
-            display_data = self.filtered_data[self.visible_columns].astype(str)
+            display_data = self.filtered_data[list(self.visible_columns)].astype(str)
             
             # Add columns
             table.add_columns(*display_data.columns.tolist())
@@ -123,27 +127,61 @@ class LogViewerApp(App):
         """Open a dialog to select visible columns."""
         columns = self.original_data.columns.tolist()
         # Create a list of tuples with column names and their visibility status
-        column_visibility = [(col, col in self.visible_columns) for col in columns]
+        # column_visibility = [(col, col in self.visible_columns) for col in columns]
         
         # Create a Dialog with checkboxes
-        dialog = Dialog(
-            title="Select Columns to Display",
-            content=Container(
-                *[
-                    Static(f"[b]'✓[/b] {col}' if show else f'  {col}')") 
-                    for col, show in column_visibility
-                ]
-            ),
-            buttons=["OK", "cancel"]
-        )
-        
-        self.push_dialog(dialog)
+        dialog = FilterScreen(columns)
+        self.push_screen(dialog)
 
-    def on_dialog_submitted(self, dialog: Dialog, value: str) -> None:
+    def on_dialog_submitted(self, value: str) -> None:
         if value == "OK":
             # Update visible_columns based on user selection
             # (This is a simplified version; you might need to implement the actual selection logic)
             pass  # Add your logic here to update self.visible_columns
+
+class FilterScreen(ModalScreen):
+    """Screen for setting up filters."""
+    
+    BINDINGS = [("escape", "app.pop_screen", "Cancel")]
+    
+    def __init__(self, columns: List[str]):
+        super().__init__()
+        self.columns = columns
+        
+    def compose(self) -> ComposeResult:
+        with Vertical(id="filter_container"):
+            yield Label("Filter Table", id="filter_title")
+            with Horizontal():
+                yield Label("Column:")
+                yield Select([(col, col) for col in self.columns], id="filter_column", value=self.columns[0])
+            with Horizontal():
+                yield Label("Contains:")
+                yield Input(id="filter_value", placeholder="Filter value")
+            with Horizontal(id="filter_buttons"):
+                yield Button("Apply", id="apply_button")
+                yield Button("Cancel", id="cancel_button")
+    
+    @on(Input.Submitted)
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        """Handle when the user presses Enter in the filter value input."""
+        self.apply_filter_and_close()
+    
+    @on(Button.Pressed, "#apply_button")
+    def on_apply_button(self, event: Button.Pressed) -> None:
+        """Handle when the apply button is pressed."""
+        self.apply_filter_and_close()
+    
+    @on(Button.Pressed, "#cancel_button")
+    def on_cancel_button(self, event: Button.Pressed) -> None:
+        """Handle when the cancel button is pressed."""
+        self.app.pop_screen()
+    
+    def apply_filter_and_close(self) -> None:
+        """Apply the filter and close the screen."""
+        column = self.query_one("#filter_column").value
+        value = self.query_one("#filter_value").value
+        self.apply_filter(column, value)
+        self.app.pop_screen()
 
 if __name__ == "__main__":
     app = LogViewerApp()
