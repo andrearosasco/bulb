@@ -7,25 +7,25 @@ from textual.containers import Container
 from textual.widgets import DataTable, Input, Static
 from textual import on
 from textual.reactive import var
-from textual.widgets import DataTable, Footer, Header, Input, Label, Select, Button
+from textual.widgets import DataTable, Footer, Header, Input, Label, Select, Button, TabbedContent, TabPane
 from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen
 
 class LogViewerApp(App):
     CSS = """
-    Container {
-        layout: vertical;
-        padding: 1;
-    }
-    #filter-input {
-        margin-bottom: 1;
-    }
-    #table-container {
-        height: 1fr;
-    }
-    DataTable {
-        height: 1fr;
-    }
+    # Container {
+    #     layout: vertical;
+    #     padding: 1;
+    # }
+    # #filter-input {
+    #     margin-bottom: 1;
+    # }
+    # #table-container {
+    #     height: 1fr;
+    # }
+    # DataTable {
+    #     height: 1fr;
+    # }
     """
     
     BINDINGS = [
@@ -39,13 +39,21 @@ class LogViewerApp(App):
     visible_columns = set()
 
     def compose(self) -> ComposeResult:
-        yield Container(
-            Static("Filter (fuzzy match):"),
-            Input(id="filter-input", placeholder="Type to filter..."),
-            Static("Click column headers to sort", id="sort-instruction"),
-            DataTable(id="log-table"),
-            id="table-container"
-        )
+        with TabbedContent():
+            with TabPane("Meta"):
+                yield Container(
+                    Static("Filter (fuzzy match):"),
+                    Input(id="filter-input", placeholder="Type to filter..."),
+                    Static("Click column headers to sort", id="sort-instruction"),
+                    DataTable(id="log-table", cursor_type='row'),
+                    id="table-container"
+                )
+            with TabPane("Config"):
+                yield Container()
+            with TabPane("Results"):
+                yield Container()
+            with TabPane("All"):
+                yield Container()
 
     def on_mount(self) -> None:
         self.load_data()
@@ -127,11 +135,13 @@ class LogViewerApp(App):
         """Open a dialog to select visible columns."""
         columns = self.original_data.columns.tolist()
         # Create a list of tuples with column names and their visibility status
-        # column_visibility = [(col, col in self.visible_columns) for col in columns]
-        
+        column_visibility = {col: col in self.visible_columns for col in columns}
+        def update_column_visibility(column_visibility: dict[str, bool]) -> None:
+            self.visible_columns = {col for col, visible in column_visibility.items() if visible}
+            self.update_table()
         # Create a Dialog with checkboxes
-        dialog = FilterScreen(columns)
-        self.push_screen(dialog)
+        dialog = FilterScreen(column_visibility)
+        self.push_screen(dialog, update_column_visibility)
 
     def on_dialog_submitted(self, value: str) -> None:
         if value == "OK":
@@ -139,49 +149,73 @@ class LogViewerApp(App):
             # (This is a simplified version; you might need to implement the actual selection logic)
             pass  # Add your logic here to update self.visible_columns
 
+from textual.screen import ModalScreen
+from textual.widgets import Checkbox, Button, Label
+from textual.containers import Vertical, Horizontal, VerticalScroll
+from textual import on
+from textual.app import ComposeResult
 class FilterScreen(ModalScreen):
-    """Screen for setting up filters."""
+    """Screen for toggling column visibility."""
+    CSS = """
+    FilterScreen {
+        align: center middle;
+    }
+    .dialog {
+        padding: 0 1;
+        width: 50%;  /* Increased width */
+        height: 50%;  /* Increased height */
+        border: thick $background 80%;
+        background: $surface;
+    }
+    .grid-layout {
+        layout: grid;
+        width: 100%;
+        grid-gutter: 1 1;
+        grid-size: 2;  /* Changed to 4 columns */
+        grid-rows: auto;  /* Dynamic rows */
+        overflow-y: auto;  /* Add scrolling if needed */
+        max-height: 70%;  /* Limit height */
+    }
+    .dialog-checkbox {
+        width: 100%;
+    }
+    """
     
-    BINDINGS = [("escape", "app.pop_screen", "Cancel")]
+    BINDINGS = [("escape", "apply_changes", "Cancel")]
     
-    def __init__(self, columns: List[str]):
+    def __init__(self, columns_visibility: dict[str, bool]):
         super().__init__()
-        self.columns = columns
-        
-    def compose(self) -> ComposeResult:
-        with Vertical(id="filter_container"):
-            yield Label("Filter Table", id="filter_title")
-            with Horizontal():
-                yield Label("Column:")
-                yield Select([(col, col) for col in self.columns], id="filter_column", value=self.columns[0])
-            with Horizontal():
-                yield Label("Contains:")
-                yield Input(id="filter_value", placeholder="Filter value")
-            with Horizontal(id="filter_buttons"):
-                yield Button("Apply", id="apply_button")
-                yield Button("Cancel", id="cancel_button")
+        self.columns_visibility = columns_visibility
+        self.columns = list(columns_visibility.keys())
     
-    @on(Input.Submitted)
-    def on_input_submitted(self, event: Input.Submitted) -> None:
-        """Handle when the user presses Enter in the filter value input."""
-        self.apply_filter_and_close()
+    def compose(self) -> ComposeResult:
+        yield Vertical(
+                Label(
+                    "Toggle Columns",
+                    classes="dialog-title",
+                ),
+                VerticalScroll(
+                        *(
+                            Checkbox(
+                                column,
+                                value=self.columns_visibility[column],
+                                id=f"checkbox_{column}",
+                                classes="dialog-checkbox",
+                            )
+                            for column in self.columns
+                        ),
+                        classes="grid-layout",
+                ),
+                classes="dialog",
+            )
     
     @on(Button.Pressed, "#apply_button")
-    def on_apply_button(self, event: Button.Pressed) -> None:
-        """Handle when the apply button is pressed."""
-        self.apply_filter_and_close()
-    
-    @on(Button.Pressed, "#cancel_button")
-    def on_cancel_button(self, event: Button.Pressed) -> None:
-        """Handle when the cancel button is pressed."""
-        self.app.pop_screen()
-    
-    def apply_filter_and_close(self) -> None:
-        """Apply the filter and close the screen."""
-        column = self.query_one("#filter_column").value
-        value = self.query_one("#filter_value").value
-        self.apply_filter(column, value)
-        self.app.pop_screen()
+    def action_apply_changes(self) -> None:
+        visibility_states = {
+            column: self.query_one(f"#checkbox_{column}", Checkbox).value
+            for column in self.columns
+        }
+        self.dismiss(visibility_states)
 
 if __name__ == "__main__":
     app = LogViewerApp()
