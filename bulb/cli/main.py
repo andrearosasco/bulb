@@ -6,6 +6,7 @@ import os
 import rich
 
 import bulb
+from bulb.tui.log_table import log_table_tui
 import bulb.utils.config as cfg
 import bulb.utils.project as project
 
@@ -60,6 +61,10 @@ def submit(action:str, tags:str='', resource_group:str='any'):
         logger.error("Jobs can only be submitted from inside a git repo.")
         return
     api.submit(action, tags, resource_group)
+
+@app.command()
+def exp():
+    log_table_tui()
 
 
 @app.callback()
