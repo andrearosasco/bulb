@@ -70,6 +70,7 @@ def main():
             'status': 'Running',
             'start_time': datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         }
+        meta_updates.update(action)
         update_json_file(f'{log_dir}/meta.json', meta_updates)
 
         cmd = format_cmd(action["cmd"], cfg.Runner.cmd_format)
