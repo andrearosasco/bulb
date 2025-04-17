@@ -68,7 +68,8 @@ def main():
             'job_id': job_id,
             'hostname': os.environ.get("HOSTNAME", ""),
             'status': 'Running',
-            'start_time': datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            'start_time': datetime.datetime.now().strftime("%Y%m%d_%H%M%S"),
+            'tags': action['tags']
         }
         meta_updates.update(action)
         update_json_file(f'{log_dir}/meta.json', meta_updates)

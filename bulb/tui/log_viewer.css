@@ -1,0 +1,30 @@
+
+Screen {
+    layout: vertical;
+}
+Header {
+    dock: top;
+}
+Footer {
+    dock: bottom;
+}
+TabbedContent {
+    height: 1fr; /* Make tabs fill available space */
+}
+TabPane {
+    /* Ensure panes allow scrolling if table is wide */
+    /* DataTable handles its own scrolling, but padding helps */
+    padding: 0 1;
+}
+LogTable {
+    height: 1fr; /* Make table fill the pane */
+    border: round $accent;
+}
+/* Style for modal screens */
+ColumnConfigScreen > .dialog {
+    border: thick $accent;
+}
+DeleteConfirmScreen > #delete-dialog {
+    border: thick $error;
+}
+         

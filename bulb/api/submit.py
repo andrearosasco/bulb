@@ -38,7 +38,7 @@ def add_to_queue(action_id, action, tags, resource_group):
         'cmd': action,
         'action_id': action_id,
         'repo_url': git_remote,
-        'tags': 'none',
+        'tags': tags,
         'resource_group': resource_group,
     }
 
